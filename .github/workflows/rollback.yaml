@@ -1,0 +1,32 @@
+name: Manual rollback Action
+
+on:
+  workflow_dispatch:
+    inputs:
+      releaseActualVersion:
+        description: 'Actual release tag version'
+        required: true
+      releaseLatestVersion:
+        description: 'Latest release tag version'
+        required: true
+
+jobs:
+  createPullRequest:
+    runs-on: [self-hosted]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Create commit and Push
+        run: |
+          git config user.name "${{ secrets.GIT_NAME }}"
+          git config user.email "${{ secrets.GIT_EMAIL }}"
+          git config user.password "${{ secrets.GIT_TOKEN }}"
+          git checkout -b "ci-${{ github.run_id }}"   
+          sed -i '' '2s/tag: ${{ github.event.inputs.releaseActualVersion }}/tag: ${{ github.event.inputs.releaseLatestVersion }}/' src/main/kotlin/com/example/file.txt 
+          git add -A && git commit -m '[production] Change image to version ${{ github.event.inputs.releaseLatestVersion }}'
+          git push --set-upstream origin "ci-${{ github.run_id }}"
+
+      - name: create pull request
+        run: gh pr create -B main -H ci-${{ github.run_id }} --title  "[production] Change image to version ${{ github.event.inputs.releaseLatestVersion }}"  --body 'Change image version to version ${{ github.event.inputs.releaseLatestVersion }}'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GIT_TOKEN }}
