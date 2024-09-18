@@ -22,7 +22,7 @@ jobs:
           git config user.email "${{ secrets.GIT_EMAIL }}"
           git config user.password "${{ secrets.GIT_TOKEN }}"
           git checkout -b "ci-${{ github.run_id }}"   
-          sed -i '' '2s/  tag: ${{ github.event.inputs.releaseActualVersion }}/  tag: ${{ github.event.inputs.releaseLatestVersion }}/' src/main/kotlin/com/example/file.yaml
+          sed -i '2s/  tag: ${{ github.event.inputs.releaseActualVersion }}/  tag: ${{ github.event.inputs.releaseLatestVersion }}/' src/main/kotlin/com/example/file.yaml
           git add -A && git commit -m '[production] Change image to version ${{ github.event.inputs.releaseLatestVersion }}'
           git push --set-upstream origin "ci-${{ github.run_id }}"
 
