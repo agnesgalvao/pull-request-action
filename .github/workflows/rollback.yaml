@@ -14,8 +14,25 @@ on:
           - production
 
 jobs:
+  validateVersion:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Get version
+        run: |
+          echo "ACTUAL_VERSION=$(sed '2!d' src/main/kotlin/com/example/${{ github.event.inputs.environment }}/file.yaml | grep -o '[ˆ1-9]\+')" >> $GITHUB_ENV
+          echo "LATEST_VERSION=$(echo "${{ github.event.inputs.releaseLatestVersion }}" | grep -o '[ˆ1-9]\+')" >> $GITHUB_ENV
+      - name: Validate
+        run: |
+         if [[ `expr $ACTUAL_VERSION - 1` != $LATEST_VERSION ]]; then 
+           exit 1
+         fi
+
   createPullRequest:
     runs-on: ubuntu-latest
+    needs: [validateVersion]
+    if: ${{ success() }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
